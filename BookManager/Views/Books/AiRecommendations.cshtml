@@ -1,0 +1,120 @@
+﻿@model BookManager.Models.ViewModels.AiRecommendationsViewModel
+
+@{
+    ViewData["Title"] = "AI препоръки";
+}
+
+<h2>AI препоръки за книги</h2>
+
+<p>
+    Въведете своите интереси, а AI ще избере
+    най-подходящите книги от Google Books.
+</p>
+
+<form asp-action="AiRecommendations"
+      method="post"
+      class="mb-4">
+
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="Interests" class="form-label">
+            Вашите интереси
+        </label>
+
+        <textarea asp-for="Interests"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Например: научна фантастика, космос, приключения"></textarea>
+
+        <span asp-validation-for="Interests"
+              class="text-danger"></span>
+    </div>
+
+    @if (!ViewContext.HttpContext.RequestServices
+    .GetRequiredService<IWebHostEnvironment>()
+    .IsProduction())
+    {
+        <div class="mb-3">
+            <label asp-for="Provider" class="form-label">
+                Изберете AI модел
+            </label>
+
+            <select asp-for="Provider" class="form-select">
+                <option value="OpenAI">OpenAI API</option>
+                <option value="LocalAI">Qwen (LM Studio)</option>
+            </select>
+        </div>
+    }
+    else
+    {
+        <input type="hidden"
+               asp-for="Provider"
+               value="OpenAI" />
+    }
+
+
+    <button type="submit" class="btn btn-primary">
+        Генерирай AI препоръки
+    </button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @Model.ErrorMessage
+    </div>
+}
+
+@if (Model.Recommendations.Any())
+{
+    <h3>Препоръчани книги</h3>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+
+        @foreach (var book in Model.Recommendations)
+        {
+            <div class="col">
+                <div class="card h-100">
+
+                    @if (!string.IsNullOrEmpty(book.ThumbnailUrl))
+                    {
+                        <img src="@book.ThumbnailUrl"
+                             class="card-img-top"
+                             alt="Корица на @book.Title"
+                             style="height:240px;object-fit:contain;" />
+                    }
+
+                    <div class="card-body d-flex flex-column">
+
+                        <h5 class="card-title">@book.Title</h5>
+
+                        <p class="text-muted">@book.Authors</p>
+
+                        <p class="card-text">
+                            <strong>Защо тази книга?</strong>
+                            @book.Reason
+                        </p>
+
+                        <form asp-action="AddFromGoogle"
+                              method="post"
+                              class="mt-auto">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="googleBookId"
+                                   value="@book.GoogleBookId" />
+
+                            <button type="submit"
+                                    class="btn btn-success w-100">
+                                Добави към моята библиотека
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

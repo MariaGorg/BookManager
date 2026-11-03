@@ -1,0 +1,80 @@
+﻿@using BookManager.Models.ViewModels
+@model BookSearchViewModel
+
+
+<h1>Търсене на книги</h1>
+
+<form method="get" style="margin-bottom: 16px;">
+ 
+
+    <input name="query" value="@Model.Query" placeholder="Ключова дума..." style="padding:8px; width:320px;" />
+  
+
+    <button type="submit" style="padding:8px 12px;">Търси</button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+  
+    <p style="color:red;">@Model.ErrorMessage</p>
+}
+
+@if (Model.Results.Any())
+{
+    <div class="cards">
+        @foreach (var b in Model.Results)
+        {
+            <div class="card">
+                <div class="thumb">
+                
+                    @if (!string.IsNullOrWhiteSpace(b.ThumbnailUrl))
+                    {
+                        <img src="@b.ThumbnailUrl" alt="cover" />
+                    }
+                    else
+                    {
+                        <div class="noimg">No cover</div>
+                    }
+                </div>
+
+                <div class="content">
+                    <div class="title">@b.Title</div>
+
+                    <div class="meta">
+                        <span>@b.Authors</span>
+
+                        @if (!string.IsNullOrWhiteSpace(b.PublishedYear))
+                        {
+                            <span> • @b.PublishedYear</span>
+                        }
+                    </div>
+
+                    <div class="desc">
+                        @{
+                            var d = b.Description ?? "Няма описание.";
+                            if (d.Length > 180) { d = d.Substring(0, 180) + "..."; }
+                        }
+                        @d
+                    </div>
+
+                    <form asp-controller="Books"
+                          asp-action="AddFromGoogle"
+                          method="post"
+                          class="mt-3">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="googleBookId"
+                               value="@b.GoogleBookId" />
+
+                        <button type="submit"
+                                class="btn btn-success">
+                            Добави към моята библиотека
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
